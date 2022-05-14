@@ -1,0 +1,50 @@
+<!DOCTYPE >
+<html>
+	<head>
+		<meta charset="utf8" />
+		<title>文件分片上传</title>
+	</head>
+	<body>
+		<input name="file" type="file" id="input" />
+		<button id="btn">提交</button>
+		<script>
+			function chunkFile(file, thunkSize) {
+				var { name, size } = file;
+				var chunkSize = thunkSize || Math.floor(size / 10);
+
+				var res = [];
+				var index = 0;
+				var start, end, blobFile;
+				while (true) {
+					start = index * chunkSize;
+					if (start >= size) {
+						break;
+					}
+					end = start + chunkSize >= size ? size : start + chunkSize;
+					blobFile = file.slice(start, end);
+					blobFile = new File([blobFile], `${index}_${name}`); // -> File Object
+					res.push(blobFile);
+					index++;
+				}
+				return res;
+			}
+
+			var btn = document.getElementById("btn");
+			btn.addEventListener("click", upload, false);
+			async function upload() {
+				var fileInput = document.getElementById("input");
+				var files = chunkFile(fileInput.files[0]);
+				for (var i = 0, l = files.length; i < l; i++) {
+					formData = new FormData();
+					formData.append("index", i);
+					formData.append("file", files[i]);
+					let res = await fetch("/upload", {
+						method: "post",
+						body: formData,
+					});
+					console.log(await res.json());
+				}
+			}
+		</script>
+	</body>
+</html>
